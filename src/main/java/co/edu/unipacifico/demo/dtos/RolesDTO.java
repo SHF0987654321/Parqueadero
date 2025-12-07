@@ -1,5 +1,7 @@
 package co.edu.unipacifico.demo.dtos;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,9 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class VehiculosDTO {
+public class RolesDTO {
+
     private Long id;
-    private String placa;
-    private String tipo;
+    private String nombre;
+    private List<Long> permisos;
 
 }
