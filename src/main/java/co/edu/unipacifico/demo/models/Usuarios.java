@@ -10,7 +10,7 @@ import java.util.Set;
 @Table(name = "usuarios")
 @Getter
 @Setter
-@ToString(exclude = {"clave", "roles"})
+@ToString(exclude = {"password", "roles"})
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -23,9 +23,12 @@ public class Usuarios {
     
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
+
+    @Column(name = "email", nullable = false, length = 100)
+    private String email;
     
-    @Column(name = "clave", nullable = false, length = 100)
-    private String clave;
+    @Column(name = "password", nullable = false, length = 100)
+    private String password;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -37,13 +40,14 @@ public class Usuarios {
 
     public Usuarios(String nombre, String clave) {
         this.nombre = nombre;
-        this.clave = clave;
+        this.password = clave;
         this.roles = new HashSet<>();
     }
 
-    public Usuarios(String nombre, String clave, Set<Roles> roles) {
+    public Usuarios(String nombre, String email, String password, Set<Roles> roles) {
         this.nombre = nombre;
-        this.clave = clave;
+        this.email = email;
+        this.password = password;
         this.roles = roles != null ? roles : new HashSet<>();
     }
     

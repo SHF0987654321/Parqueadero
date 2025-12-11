@@ -1,39 +1,35 @@
 package co.edu.unipacifico.demo.mappers;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import co.edu.unipacifico.demo.dtos.UsuariosDTO;
-import co.edu.unipacifico.demo.models.Roles;
+import co.edu.unipacifico.demo.dtos.RegisterRequest;
+import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.models.Usuarios;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", 
+        // ¡IMPORTANTE! Se debe referenciar la clase MappingUtils
+        uses = {MappingUtils.class} 
+)
 public interface UsuariosMapper {
 
-    UsuariosDTO toDTO(Usuarios usuarios);
+    // ---- Entity (Usuarios) -> DTO (UsuariosResponse) ----
+    
+    // 1. Mapea Set<Roles> a List<Long> (si tienes un método rolesToIds en MappingUtils)
+    @Mapping(target = "roles", source = "roles", qualifiedByName = "rolesToIds")
+    
+    // 2. ¡NUEVA LÍNEA CLAVE! Mapea Set<Roles> (source) al campo 'rol' (target)
+    //    usando el método @Named("mapPrincipalRolName") definido en MappingUtils.
+    @Mapping(target = "rol", source = "roles", qualifiedByName = "mapPrincipalRolName")
+    UsuariosResponse toDTO(Usuarios usuarios);
 
-    @Mapping(target = "roles", ignore = true) // roles se asignan en el service
-    Usuarios toEntity(UsuariosDTO usuariosDTO);
+    // ---- DTO (UsuariosResponse) -> Entity (Usuarios) ----
+    // Roles se llenan en el service, no aquí, e 'rol' no es parte de la Entidad
+    @Mapping(target = "roles", ignore = true)
+    Usuarios toEntity(UsuariosResponse usuariosDTO);
 
-    // ======================
-    // MÉTODOS QUE PIDE MAPSTRUCT
-    // ======================
-
-    // Set<Roles> -> List<Long>
-    default List<Long> map(Set<Roles> roles) {
-        if (roles == null) return null;
-        return roles.stream()
-                .map(Roles::getId)
-                .collect(Collectors.toList());
-    }
-
-    // List<Long> -> Set<Roles>
-    // Esto NO se hace aquí, se hace en el service, así que lo dejamos en null.
-    default Set<Roles> map(List<Long> ids) {
-        return null;
-    }
+    // ---- Registro (RegisterRequest) -> Entity (Usuarios) ----
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "roles", ignore = true) // Los roles se asignan en el servicio
+    Usuarios toEntity(RegisterRequest registerRequest);  
 }

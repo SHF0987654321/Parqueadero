@@ -1,6 +1,9 @@
 package co.edu.unipacifico.demo.controllers;
 
-import co.edu.unipacifico.demo.dtos.UsuariosDTO;
+import co.edu.unipacifico.demo.dtos.LoginRequest;
+import co.edu.unipacifico.demo.dtos.LoginResponse;
+import co.edu.unipacifico.demo.dtos.RegisterRequest;
+import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.services.security.AuthService;
 import co.edu.unipacifico.demo.services.security.UsuariosServiceImpl;
 import co.edu.unipacifico.demo.services.security.data.TokenInfo;
@@ -8,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,8 +30,8 @@ public class AuthController {
      * POST /api/auth/registro
      */
     @PostMapping("/registro")
-    public ResponseEntity<UsuariosDTO> registrarUsuario(@Valid @RequestBody UsuariosDTO usuarioDTO) {
-        UsuariosDTO nuevoUsuario = usuariosService.registrarUsuario(usuarioDTO);
+    public ResponseEntity<UsuariosResponse> registrarUsuario(@Valid @RequestBody RegisterRequest registerRequest) {
+        UsuariosResponse nuevoUsuario = usuariosService.registrarUsuario(registerRequest);
         return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
     }
 
@@ -38,9 +42,9 @@ public class AuthController {
      * Response: { "accessToken": "...", "refreshToken": "...", "tokenType": "Bearer", "expiresIn": 3600 }
      */
     @PostMapping("/login")
-    public ResponseEntity<TokenInfo> login(@Valid @RequestBody UsuariosDTO usuarioDTO) {
-        TokenInfo tokenInfo = authService.login(usuarioDTO);
-        return ResponseEntity.ok(tokenInfo);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        LoginResponse loginResponse = authService.login(loginRequest);
+        return ResponseEntity.ok(loginResponse);
     }
 
     /**
@@ -61,15 +65,15 @@ public class AuthController {
      * Header: Authorization: Bearer <token>
      */
     @GetMapping("/me")
-    public ResponseEntity<UsuariosDTO> obtenerUsuarioActual(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<UsuariosResponse> obtenerUsuarioActual(@RequestHeader("Authorization") String authHeader) {
         // El token ya fue validado por el filtro JWT
         // Aquí puedes extraer el username del SecurityContext
-        String username = org.springframework.security.core.context.SecurityContextHolder
+        String username = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getName();
         
-        UsuariosDTO usuario = usuariosService.getUsuarioByNombre(username);
+        UsuariosResponse usuario = usuariosService.getUsuarioByEmail(username);
         return ResponseEntity.ok(usuario);
     }
 }

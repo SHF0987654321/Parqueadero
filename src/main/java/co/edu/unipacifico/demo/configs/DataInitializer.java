@@ -74,14 +74,15 @@ public class DataInitializer implements CommandLineRunner {
                 .orElseThrow(() -> new RuntimeException("Rol ADMIN no encontrado"));
             
             Usuarios admin = new Usuarios();
-            admin.setNombre("admin");
-            admin.setClave(passwordEncoder.encode("admin123"));
+            admin.setNombre("Sebastian Hurtado");
+            admin.setEmail("sebastianhurtado@unipacifico.edu.co");
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRoles(new HashSet<>(Set.of(adminRolManaged)));
             
             usuariosRepository.save(admin);
             
             System.out.println("✓ Usuario administrador creado:");
-            System.out.println("  - Usuario: admin");
+            System.out.println("  - Usuario: Sebastian Hurtado");
             System.out.println("  - Contraseña: admin123");
         }
 
@@ -93,7 +94,8 @@ public class DataInitializer implements CommandLineRunner {
             
             Usuarios usuario = new Usuarios();
             usuario.setNombre("usuario");
-            usuario.setClave(passwordEncoder.encode("usuario123"));
+            usuario.setEmail("usuario@gmail.com");
+            usuario.setPassword(passwordEncoder.encode("usuario123"));
             usuario.setRoles(new HashSet<>(Set.of(userRolManaged)));
             
             usuariosRepository.save(usuario);

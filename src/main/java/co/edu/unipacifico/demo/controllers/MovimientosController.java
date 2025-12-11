@@ -33,8 +33,8 @@ public class MovimientosController {
 
     // Consultar movimiento activo de un vehículo
     @GetMapping("/activo/vehiculo/{vehiculoId}")
-    public ResponseEntity<MovimientosDTO> consultarMovimientoActivoPorVehiculo(@PathVariable Long vehiculoId) {
-        return movimientosService.consultarMovimientoActivoPorVehiculo(vehiculoId)
+    public ResponseEntity<MovimientosDTO> consultarMovimientoActivoPorPlaca(@PathVariable String placa) {
+        return movimientosService.consultarMovimientoActivoPorPlaca(placa)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -47,9 +47,9 @@ public class MovimientosController {
     }
 
     // Consultar historial de movimientos de un vehículo
-    @GetMapping("/historial/vehiculo/{vehiculoId}")
-    public ResponseEntity<List<MovimientosDTO>> consultarHistorialPorVehiculo(@PathVariable Long vehiculoId) {
-        List<MovimientosDTO> historial = movimientosService.consultarHistorialPorVehiculo(vehiculoId);
+    @GetMapping("/historial/vehiculo/{placa}")
+    public ResponseEntity<List<MovimientosDTO>> consultarHistorialPorPlaca(@PathVariable String placa) {
+        List<MovimientosDTO> historial = movimientosService.consultarHistorialPorPlaca(placa);
         return ResponseEntity.ok(historial);
     }
 

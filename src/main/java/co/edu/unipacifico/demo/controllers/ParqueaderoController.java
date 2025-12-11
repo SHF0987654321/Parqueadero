@@ -1,13 +1,9 @@
 package co.edu.unipacifico.demo.controllers;
 
-import java.util.Optional;
-
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import co.edu.unipacifico.demo.dtos.MovimientosDTO;
 
 
 @RestController
@@ -15,8 +11,7 @@ import co.edu.unipacifico.demo.dtos.MovimientosDTO;
 public class ParqueaderoController {
 
     @GetMapping("/estado")
-    public String estadoParqueadero(Model model) {
-        model.addAttribute("mensaje", "El parqueadero está operativo");
-        return "estadoParqueadero";
+    public ResponseEntity<String> estadoParqueadero() {
+        return ResponseEntity.ok("El parqueadero está operativo");
     }
 }

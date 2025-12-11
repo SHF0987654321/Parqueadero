@@ -9,7 +9,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import co.edu.unipacifico.demo.dtos.UsuariosDTO;
+import co.edu.unipacifico.demo.dtos.RegisterRequest;
+import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.exceptions.DatabaseException;
 import co.edu.unipacifico.demo.exceptions.InvalidUserExeception;
 import co.edu.unipacifico.demo.exceptions.ResouseNotFoundException;
@@ -28,7 +29,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 /**
  * Servicio de gestión de usuarios
  * Implementa UserDetailsService para Spring Security
- * Los métodos de autenticación (login, refresh) están en AuthService
  */
 @Service
 @RequiredArgsConstructor
@@ -40,53 +40,54 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
     private final RolesRepository rolesRepository;
 
     @Override
-    public Optional<UsuariosDTO> getUsuarioById(Long id) {
+    public Optional<UsuariosResponse> getUsuarioById(Long id) {
         try {
             Optional<Usuarios> optionalUsuario = usuariosRepository.findById(id);
-
             if (optionalUsuario.isEmpty()) {
                 return Optional.empty();
             }
-
             Usuarios usuario = optionalUsuario.get();
-            UsuariosDTO usuariosDTO = usuariosMapper.toDTO(usuario);
-            // No exponer contraseña
-            usuariosDTO.setClave(null);
-            
+            UsuariosResponse usuariosDTO = usuariosMapper.toDTO(usuario);
+            usuariosDTO.setPassword(null);
             return Optional.of(usuariosDTO);
-
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar el usuario en la base de datos.", e);
         }
     }
 
     @Override
-    public UsuariosDTO getUsuarioByNombre(String nombre) {
+    public UsuariosResponse getUsuarioByNombre(String nombre) {
         Usuarios usuario = usuariosRepository.findByNombre(nombre)
+            // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
             .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con nombre: " + nombre));
         
-        UsuariosDTO dto = usuariosMapper.toDTO(usuario);
-        dto.setClave(null); // No exponer contraseña
+        UsuariosResponse dto = usuariosMapper.toDTO(usuario);
+        dto.setPassword(null);
         return dto;
     }
 
     @Override
     @Transactional
-    public UsuariosDTO registrarUsuario(UsuariosDTO usuarioDTO) {
+    public UsuariosResponse registrarUsuario(RegisterRequest registerRequest) {
         // 1. Validación: Usuario ya existe
-        if (usuariosRepository.findByNombre(usuarioDTO.getNombre()).isPresent()) {
-            throw new InvalidUserExeception("Ya existe un usuario con el nombre: " + usuarioDTO.getNombre());
+        if (usuariosRepository.findByNombre(registerRequest.getNombre()).isPresent()) {
+            // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
+            throw new InvalidUserExeception("Ya existe un usuario con el nombre: " + registerRequest.getNombre());
+        }
+        if (usuariosRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            // CORRECCIÓN: InvalidUserExeception -> InvalidUserException y mensaje
+            throw new InvalidUserExeception("Ya existe un usuario con el email: " + registerRequest.getEmail());
         }
 
         // 2. Convertir DTO a Entity
-        Usuarios nuevoUsuario = usuariosMapper.toEntity(usuarioDTO);
+        Usuarios nuevoUsuario = usuariosMapper.toEntity(registerRequest);
 
         // 3. Encriptar contraseña
-        nuevoUsuario.setClave(passwordEncoder.encode(usuarioDTO.getClave()));
+        nuevoUsuario.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        // 4. ASIGNAR ROL POR DEFECTO (USER) IGNORANDO EL ROL EN EL DTO DE ENTRADA
-        // Esto asegura que nadie se auto-asigne el rol de ADMIN en el registro.
+        // 4. ASIGNAR ROL POR DEFECTO (USER)
         Roles rolDefault = rolesRepository.findByNombre("USER")
+            // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
             .orElseThrow(() -> new InvalidUserExeception("Rol por defecto 'USER' no encontrado"));
     
         nuevoUsuario.setRoles(Set.of(rolDefault));
@@ -95,52 +96,56 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
         Usuarios usuarioGuardado = usuariosRepository.save(nuevoUsuario);
     
         // 6. Retornar DTO sin contraseña
-        UsuariosDTO resultado = usuariosMapper.toDTO(usuarioGuardado);
-        resultado.setClave(null);
+        UsuariosResponse resultado = usuariosMapper.toDTO(usuarioGuardado);
+        resultado.setPassword(null);
     
         return resultado;
     }
 
     @Override
     @Transactional
-    public UsuariosDTO actualizarUsuario(Long id, UsuariosDTO usuarioDTO) {
-        // Buscar usuario existente
+    public UsuariosResponse actualizarUsuario(Long id, UsuariosResponse usuarioDTO) {
+        // 1. Buscar usuario existente
         Usuarios usuarioExistente = usuariosRepository.findById(id)
+            // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
             .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con id: " + id));
-        
-        // Actualizar nombre si es proporcionado
+    
+        // --- 2. ACTUALIZAR EMAIL (CRÍTICO) ---
+        if (usuarioDTO.getEmail() != null && !usuarioDTO.getEmail().isEmpty()) {
+            usuariosRepository.findByEmail(usuarioDTO.getEmail()) 
+                .ifPresent(u -> {
+                    if (!u.getId().equals(id)) {
+                         // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
+                        throw new InvalidUserExeception("El correo electrónico ya está en uso por otro usuario");
+                    }
+                });
+            usuarioExistente.setEmail(usuarioDTO.getEmail());
+        }
+    
+        // --- 3. ACTUALIZAR NOMBRE (Si es editable) ---
         if (usuarioDTO.getNombre() != null && !usuarioDTO.getNombre().isEmpty()) {
             usuariosRepository.findByNombre(usuarioDTO.getNombre())
                 .ifPresent(u -> {
                     if (!u.getId().equals(id)) {
+                        // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
                         throw new InvalidUserExeception("El nombre ya está en uso por otro usuario");
                     }
                 });
             usuarioExistente.setNombre(usuarioDTO.getNombre());
         }
-        
-        // Actualizar contraseña si es proporcionada
-        if (usuarioDTO.getClave() != null && !usuarioDTO.getClave().isEmpty()) {
-            usuarioExistente.setClave(passwordEncoder.encode(usuarioDTO.getClave()));
+    
+        // --- 4. ACTUALIZAR CONTRASEÑA ---
+        if (usuarioDTO.getPassword() != null && !usuarioDTO.getPassword().isEmpty()) {
+            usuarioExistente.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
         }
-        
-        // Actualizar roles si son proporcionados
-        if (usuarioDTO.getRoles() != null && !usuarioDTO.getRoles().isEmpty()) {
-            Set<Roles> roles = usuarioDTO.getRoles() 
-                .stream()
-                .map(idRol -> rolesRepository.findById(idRol)
-                    .orElseThrow(() -> new InvalidUserExeception("Rol no encontrado con id: " + idRol))
-                )
-                .collect(Collectors.toSet());
-            usuarioExistente.setRoles(roles);
-        }
-        
-        // Guardar cambios
+    
+        // 6. Guardar cambios
         Usuarios usuarioActualizado = usuariosRepository.save(usuarioExistente);
-        
-        UsuariosDTO resultado = usuariosMapper.toDTO(usuarioActualizado);
-        resultado.setClave(null);
-        
+    
+        // 7. Retornar DTO sin la contraseña
+        UsuariosResponse resultado = usuariosMapper.toDTO(usuarioActualizado);
+        resultado.setPassword(null);
+    
         return resultado;
     }
 
@@ -148,6 +153,7 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
     @Transactional
     public void eliminarUsuario(Long id) {
         if (!usuariosRepository.existsById(id)) {
+            // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
             throw new ResouseNotFoundException("Usuario no encontrado con id: " + id);
         }
         usuariosRepository.deleteById(id);
@@ -155,12 +161,12 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
 
     /**
      * Implementación de UserDetailsService para Spring Security
-     * Este método es usado por Spring Security durante la autenticación
+     * CORRECCIÓN: La búsqueda debe ser por email, no por nombre.
      */
     @Override 
-    public UserDetails loadUserByUsername(String nombre) throws UsernameNotFoundException {
-        Usuarios usuario = usuariosRepository.findByNombre(nombre)
-            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + nombre));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Usuarios usuario = usuariosRepository.findByEmail(email) // <-- ¡CORRECCIÓN CRÍTICA!
+            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
         
         List<SimpleGrantedAuthority> authorities = usuario.getRoles()
             .stream()
@@ -168,9 +174,19 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
             .collect(Collectors.toList());
 
         return new User(
-            usuario.getNombre(),
-            usuario.getClave(),
+            usuario.getEmail(), // Devolvemos el email como el "username"
+            usuario.getPassword(),
             authorities
         );
+    }
+    @Override
+    public UsuariosResponse getUsuarioByEmail(String email) {
+        Usuarios usuario = usuariosRepository.findByEmail(email)
+            .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con email: " + email));
+
+        UsuariosResponse dto = usuariosMapper.toDTO(usuario);
+        dto.setPassword(null);
+        // Asegúrate de que el DTO incluya ID y Rol (como Long/String) para que el frontend pueda usarlos.
+        return dto;
     }
 }

@@ -14,13 +14,13 @@ public interface MovimientosService {
     MovimientosDTO registrarSalida(String placa);
     
     // Consultar movimiento activo de un vehículo
-    Optional<MovimientosDTO> consultarMovimientoActivoPorVehiculo(Long vehiculoId);
+    Optional<MovimientosDTO> consultarMovimientoActivoPorPlaca(String placa);
     
     // Consultar todos los movimientos activos
     List<MovimientosDTO> consultarMovimientosActivos();
     
     // Consultar historial de movimientos de un vehículo
-    List<MovimientosDTO> consultarHistorialPorVehiculo(Long vehiculoId);
+    List<MovimientosDTO> consultarHistorialPorPlaca(String placa);
     
     // Consultar historial de movimientos de un usuario
     List<MovimientosDTO> consultarHistorialPorUsuario(Long usuarioId);

@@ -2,14 +2,16 @@ package co.edu.unipacifico.demo.services.security;
 
 import java.util.Optional;
 
-import co.edu.unipacifico.demo.dtos.UsuariosDTO;
+import co.edu.unipacifico.demo.dtos.RegisterRequest;
+import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 
 public interface UsuariosService {
 
-    UsuariosDTO getUsuarioByNombre(String nombre);
-    Optional<UsuariosDTO> getUsuarioById(Long id);
-    UsuariosDTO registrarUsuario(UsuariosDTO usuarioDTO);
-    UsuariosDTO actualizarUsuario(Long id, UsuariosDTO cambiosDTO);
+    UsuariosResponse getUsuarioByNombre(String nombre);
+    Optional<UsuariosResponse> getUsuarioById(Long id);
+    UsuariosResponse registrarUsuario(RegisterRequest registerRequest);
+    UsuariosResponse actualizarUsuario(Long id, UsuariosResponse cambiosDTO);
     void eliminarUsuario(Long id);
+    UsuariosResponse getUsuarioByEmail(String email);
     
 }

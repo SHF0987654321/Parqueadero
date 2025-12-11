@@ -151,10 +151,14 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<MovimientosDTO> consultarMovimientoActivoPorVehiculo(Long vehiculoId) {
+    public Optional<MovimientosDTO> consultarMovimientoActivoPorPlaca(String placa) {
         try {
-            return movimientosRepository.findMovimientoActivoByVehiculoId(vehiculoId)
+            Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
+                    .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con placa: " + placa));
+            return movimientosRepository.findMovimientoActivoByVehiculoId(vehiculo.getId())
                     .map(movimientosMapper::toDTO);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar movimiento activo del vehículo.", e);
         }
@@ -174,11 +178,15 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MovimientosDTO> consultarHistorialPorVehiculo(Long vehiculoId) {
+    public List<MovimientosDTO> consultarHistorialPorPlaca(String placa) {
         try {
-            return movimientosRepository.findByVehiculoIdOrderByFechaEntradaDesc(vehiculoId).stream()
+            Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
+                    .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con placa: " + placa));
+            return movimientosRepository.findByVehiculoIdOrderByFechaEntradaDesc(vehiculo.getId()).stream()
                     .map(movimientosMapper::toDTO)
                     .collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar historial del vehículo.", e);
         }

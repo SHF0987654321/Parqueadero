@@ -11,5 +11,7 @@ public interface UsuariosRepository extends JpaRepository<Usuarios, Long> {
 
     // 1. READ (Consultar por nombre) -> Usado en /inicio
     Optional<Usuarios> findByNombre(String nombre);
+    // Consultar por email
+    Optional<Usuarios> findByEmail(String email);
 
 }

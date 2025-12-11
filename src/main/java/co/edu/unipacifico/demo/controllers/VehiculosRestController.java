@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/vehiculos")
-public abstract class VehiculosRestController {
+public class VehiculosRestController {
 
     private final VehiculosService vehiculosService;
     
