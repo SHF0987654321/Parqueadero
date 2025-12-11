@@ -11,7 +11,7 @@ public interface MovimientosService {
     MovimientosDTO registrarEntrada(MovimientosDTO movimientoDTO);
     
     // Registrar salida de vehículo
-    MovimientosDTO registrarSalida(Long movimientoId);
+    MovimientosDTO registrarSalida(String placa);
     
     // Consultar movimiento activo de un vehículo
     Optional<MovimientosDTO> consultarMovimientoActivoPorVehiculo(Long vehiculoId);

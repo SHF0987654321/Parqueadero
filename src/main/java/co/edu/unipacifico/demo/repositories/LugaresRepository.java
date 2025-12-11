@@ -7,12 +7,20 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LugaresRepository extends JpaRepository<Lugares, Long> {
     
     // Buscar lugares por tipo
     List<Lugares> findByTipo(String tipo);
+    
+    // Buscar lugar por nombre
+    Optional<Lugares> findByNombre(String nombre);
+
+    // Obtener el primer lugar libre que coincida con un tipo específico
+    @Query("SELECT l FROM Lugares l WHERE l.tipo = :tipo AND l.id NOT IN (SELECT m.lugar.id FROM Movimientos m WHERE m.fechaSalida IS NULL)")
+    Optional<Lugares> findPrimerLugarDisponiblePorTipo(@Param("tipo") String tipo);
     
     // Contar lugares ocupados (que tienen movimientos sin fecha_salida)
     @Query("SELECT COUNT(DISTINCT m.lugar.id) FROM Movimientos m WHERE m.fechaSalida IS NULL")

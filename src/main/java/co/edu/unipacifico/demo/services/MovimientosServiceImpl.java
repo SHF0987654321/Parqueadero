@@ -26,35 +26,68 @@ public class MovimientosServiceImpl implements MovimientosService {
     private final MovimientosMapper movimientosMapper;
 
     @Override
+    @Transactional
     public MovimientosDTO registrarEntrada(MovimientosDTO movimientoDTO) {
         try {
-            // Validar que el vehículo no tenga un movimiento activo
+            // --- 1. VALIDAR Y/O REGISTRAR VEHÍCULO ---
+            Vehiculos vehiculo;
+            Optional<Vehiculos> vehiculoExistente = vehiculosRepository.findByPlaca(movimientoDTO.getVehiculoPlaca());
+        
+            if (vehiculoExistente.isPresent()) {
+                vehiculo = vehiculoExistente.get();
+            } else {
+                // Regla 2: Si el vehículo no existe, se registra automáticamente.
+                // NOTA: Asumiendo que el DTO incluye 'tipo' de vehículo y/o otros datos necesarios.
+                vehiculo = registrarNuevoVehiculo(movimientoDTO); 
+                // Esto es un método auxiliar que debes implementar.
+            }
+        
+            // Validar que el vehículo no tenga un movimiento activo (ya esté dentro)
             Optional<Movimientos> movimientoActivo = movimientosRepository
-                    .findMovimientoActivoByVehiculoId(movimientoDTO.getVehiculoId());
-            
+                    .findMovimientoActivoByVehiculoId(vehiculo.getId());
+        
             if (movimientoActivo.isPresent()) {
                 throw new RuntimeException("El vehículo ya tiene un movimiento activo en el sistema.");
             }
+        
+            // --- 2. ASIGNAR Y VALIDAR LUGAR (Lógica Condicional) ---
+            Lugares lugar;
+            String tipoVehiculo = vehiculo.getTipo(); // Asume que la entidad Vehiculos tiene un campo 'tipo'
+            String nombreLugarSolicitado = movimientoDTO.getLugarNombre();
+
+            // Si el nombre del lugar fue proporcionado en el DTO
+            if (nombreLugarSolicitado != null && !nombreLugarSolicitado.trim().isEmpty()) {
             
-            // Validar que el lugar esté libre
-            List<Movimientos> movimientosLugar = movimientosRepository
-                    .findMovimientosActivosByLugarId(movimientoDTO.getLugarId());
+                // A. Búsqueda y Validación de Lugar ESPECÍFICO
+                lugar = lugaresRepository.findByNombre(nombreLugarSolicitado)
+                        .orElseThrow(() -> new RuntimeException("Lugar no encontrado con nombre: " + nombreLugarSolicitado));
             
-            if (!movimientosLugar.isEmpty()) {
-                throw new RuntimeException("El lugar ya está ocupado.");
+                // Regla 1: Validar que el tipo de vehículo coincida con el tipo de lugar
+                if (!lugar.getTipo().equalsIgnoreCase(tipoVehiculo)) {
+                     throw new RuntimeException("El lugar '" + nombreLugarSolicitado + "' es para tipo '" + lugar.getTipo() + "' y el vehículo es tipo '" + tipoVehiculo + "'.");
+                }
+            
+                // Validar que el lugar ESPECÍFICO esté libre
+                List<Movimientos> movimientosLugar = movimientosRepository
+                        .findMovimientosActivosByLugarId(lugar.getId());
+            
+                if (!movimientosLugar.isEmpty()) {
+                    throw new RuntimeException("El lugar '" + nombreLugarSolicitado + "' ya está ocupado.");
+                }
+        
+            } else {
+            
+                // B. Búsqueda y Asignación de Lugar AUTOMÁTICO
+                // Búsqueda eficiente del primer lugar libre y que coincida con el TIPO de vehículo
+                lugar = lugaresRepository.findPrimerLugarDisponiblePorTipo(tipoVehiculo) // <-- Nuevo método necesario
+                        .orElseThrow(() -> new RuntimeException("No hay lugares disponibles de tipo '" + tipoVehiculo + "' en el parqueadero."));
             }
-            
-            // Buscar entidades relacionadas
-            Vehiculos vehiculo = vehiculosRepository.findById(movimientoDTO.getVehiculoId())
-                    .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
-            
+        
+            // --- 3. VALIDAR USUARIO ---
             Usuarios usuario = usuariosRepository.findById(movimientoDTO.getUsuarioId())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
-            
-            Lugares lugar = lugaresRepository.findById(movimientoDTO.getLugarId())
-                    .orElseThrow(() -> new RuntimeException("Lugar no encontrado."));
-            
-            // Crear movimiento
+        
+            // --- 4. CREAR Y GUARDAR MOVIMIENTO ---
             Movimientos movimiento = new Movimientos();
             movimiento.setVehiculo(vehiculo);
             movimiento.setUsuario(usuario);
@@ -62,36 +95,57 @@ public class MovimientosServiceImpl implements MovimientosService {
             movimiento.setFechaEntrada(movimientoDTO.getFechaEntrada() != null 
                     ? movimientoDTO.getFechaEntrada() 
                     : LocalDateTime.now());
-            
+        
             Movimientos movimientoGuardado = movimientosRepository.save(movimiento);
+        
             return movimientosMapper.toDTO(movimientoGuardado);
-            
+        
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new DatabaseException("Error al registrar la entrada.", e);
+            throw new DatabaseException("Error fatal al registrar la entrada del vehículo.", e);
         }
     }
 
+    private Vehiculos registrarNuevoVehiculo(MovimientosDTO movimientoDTO) {
+        // 1. Crear una nueva entidad Vehiculos
+        Vehiculos nuevoVehiculo = new Vehiculos();
+    
+        // 2. Asignar los campos necesarios
+        nuevoVehiculo.setPlaca(movimientoDTO.getVehiculoPlaca());
+        nuevoVehiculo.setTipo(movimientoDTO.getVehiculoTipo()); 
+    
+        // 3. Guardar en el repositorio de Vehiculos
+        return vehiculosRepository.save(nuevoVehiculo);
+    }
+
     @Override
-    public MovimientosDTO registrarSalida(Long movimientoId) {
+    @Transactional
+    public MovimientosDTO registrarSalida(String placa) {
         try {
-            Movimientos movimiento = movimientosRepository.findById(movimientoId)
-                    .orElseThrow(() -> new RuntimeException("Movimiento no encontrado."));
-            
-            if (movimiento.getFechaSalida() != null) {
-                throw new RuntimeException("Este movimiento ya tiene fecha de salida registrada.");
-            }
-            
+            // --- 1. BUSCAR VEHÍCULO POR PLACA ---
+            Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
+                    .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con placa: " + placa));
+
+            // --- 2. BUSCAR MOVIMIENTO ACTIVO POR ID DEL VEHÍCULO ---
+            // Usamos el ID del vehículo para encontrar el único movimiento sin fecha de salida.
+            Movimientos movimiento = movimientosRepository
+                    .findMovimientoActivoByVehiculoId(vehiculo.getId())
+                    .orElseThrow(() -> new RuntimeException("No se encontró un movimiento de entrada activo para el vehículo con placa: " + placa));
+
+            // Registrar la hora de salida
             movimiento.setFechaSalida(LocalDateTime.now());
+        
             Movimientos movimientoActualizado = movimientosRepository.save(movimiento);
-            
+        
             return movimientosMapper.toDTO(movimientoActualizado);
-            
+
         } catch (RuntimeException e) {
+            // Re-lanzar excepciones de negocio (ej. No encontrado)
             throw e;
         } catch (Exception e) {
-            throw new DatabaseException("Error al registrar la salida.", e);
+            // Capturar y envolver excepciones de bajo nivel
+            throw new DatabaseException("Error al registrar la salida del vehículo.", e);
         }
     }
 

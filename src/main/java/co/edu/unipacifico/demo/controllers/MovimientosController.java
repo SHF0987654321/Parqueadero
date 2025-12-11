@@ -25,9 +25,9 @@ public class MovimientosController {
     }
 
     // Registrar salida de un vehículo
-    @PutMapping("/salida/{movimientoId}")
-    public ResponseEntity<MovimientosDTO> registrarSalida(@PathVariable Long movimientoId) {
-        MovimientosDTO movimientoActualizado = movimientosService.registrarSalida(movimientoId);
+    @PutMapping("/salida/{placa}")
+    public ResponseEntity<MovimientosDTO> registrarSalida(@PathVariable String placa) {
+        MovimientosDTO movimientoActualizado = movimientosService.registrarSalida(placa);
         return ResponseEntity.ok(movimientoActualizado);
     }
 
