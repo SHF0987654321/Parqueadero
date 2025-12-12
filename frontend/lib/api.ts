@@ -65,7 +65,7 @@ export interface AuthResponse {
     id: number
     nombre: string
     email: string
-    rol: "ADMIN" | "USUARIO"
+    rol: "ADMIN" | "USER"
   }
 }
 

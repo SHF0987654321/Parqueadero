@@ -62,7 +62,6 @@ public class AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario autenticado no encontrado en DB."));
             
             UsuariosResponse userResponse = usuariosMapper.toDTO(usuario);
-            userResponse.setPassword(null); // Seguridad: no exponer el password/hash
             
             // 5. Devolver la respuesta unificada (LoginResponse)
             return new LoginResponse(

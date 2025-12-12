@@ -20,7 +20,7 @@ public class MappingUtils {
     public String mapPrincipalRolName(Set<Roles> roles) {
         
         if (roles == null || roles.isEmpty()) {
-            return "USUARIO"; // Rol de fallback si no tiene roles
+            return "USER"; // Rol de fallback si no tiene roles
         }
         
         // Lógica: Tomar el nombre del primer rol encontrado
@@ -28,7 +28,7 @@ public class MappingUtils {
         return roles.stream()
             .map(Roles::getNombre)
             .findFirst() // Elegir el primer rol
-            .orElse("USUARIO"); 
+            .orElse("USER"); 
     }
 
     @Named("rolesToIds")

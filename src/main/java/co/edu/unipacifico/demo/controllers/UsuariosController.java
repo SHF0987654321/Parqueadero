@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unipacifico.demo.dtos.UsuariosRequest;
 import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.exceptions.ResouseNotFoundException;
 import co.edu.unipacifico.demo.services.security.UsuariosService;
@@ -52,9 +53,9 @@ public class UsuariosController {
     @PutMapping("/{id}")
     public ResponseEntity<UsuariosResponse> actualizarUsuario(
         @PathVariable Long id, 
-        @RequestBody @Valid UsuariosResponse usuariosDTO
+        @RequestBody @Valid UsuariosRequest usuario
     ) {
-        UsuariosResponse usuarioActualizado = usuariosService.actualizarUsuario(id, usuariosDTO);
+        UsuariosResponse usuarioActualizado = usuariosService.actualizarUsuario(id, usuario);
         return ResponseEntity.ok(usuarioActualizado);
     }
 

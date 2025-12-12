@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import co.edu.unipacifico.demo.dtos.RegisterRequest;
+import co.edu.unipacifico.demo.dtos.UsuariosRequest;
 import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.exceptions.DatabaseException;
 import co.edu.unipacifico.demo.exceptions.InvalidUserExeception;
@@ -48,7 +49,6 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
             }
             Usuarios usuario = optionalUsuario.get();
             UsuariosResponse usuariosDTO = usuariosMapper.toDTO(usuario);
-            usuariosDTO.setPassword(null);
             return Optional.of(usuariosDTO);
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar el usuario en la base de datos.", e);
@@ -62,7 +62,6 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
             .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con nombre: " + nombre));
         
         UsuariosResponse dto = usuariosMapper.toDTO(usuario);
-        dto.setPassword(null);
         return dto;
     }
 
@@ -95,56 +94,52 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
         // 5. Guardar
         Usuarios usuarioGuardado = usuariosRepository.save(nuevoUsuario);
     
-        // 6. Retornar DTO sin contraseña
         UsuariosResponse resultado = usuariosMapper.toDTO(usuarioGuardado);
-        resultado.setPassword(null);
     
         return resultado;
     }
 
     @Override
     @Transactional
-    public UsuariosResponse actualizarUsuario(Long id, UsuariosResponse usuarioDTO) {
+    public UsuariosResponse actualizarUsuario(Long id, UsuariosRequest usuario) {
         // 1. Buscar usuario existente
         Usuarios usuarioExistente = usuariosRepository.findById(id)
             // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
             .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con id: " + id));
     
         // --- 2. ACTUALIZAR EMAIL (CRÍTICO) ---
-        if (usuarioDTO.getEmail() != null && !usuarioDTO.getEmail().isEmpty()) {
-            usuariosRepository.findByEmail(usuarioDTO.getEmail()) 
+        if (usuario.getEmail() != null && !usuario.getEmail().isEmpty()) {
+            usuariosRepository.findByEmail(usuario.getEmail()) 
                 .ifPresent(u -> {
                     if (!u.getId().equals(id)) {
                          // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
                         throw new InvalidUserExeception("El correo electrónico ya está en uso por otro usuario");
                     }
                 });
-            usuarioExistente.setEmail(usuarioDTO.getEmail());
+            usuarioExistente.setEmail(usuario.getEmail());
         }
     
         // --- 3. ACTUALIZAR NOMBRE (Si es editable) ---
-        if (usuarioDTO.getNombre() != null && !usuarioDTO.getNombre().isEmpty()) {
-            usuariosRepository.findByNombre(usuarioDTO.getNombre())
+        if (usuario.getNombre() != null && !usuario.getNombre().isEmpty()) {
+            usuariosRepository.findByNombre(usuario.getNombre())
                 .ifPresent(u -> {
                     if (!u.getId().equals(id)) {
                         // CORRECCIÓN: InvalidUserExeception -> InvalidUserException
                         throw new InvalidUserExeception("El nombre ya está en uso por otro usuario");
                     }
                 });
-            usuarioExistente.setNombre(usuarioDTO.getNombre());
+            usuarioExistente.setNombre(usuario.getNombre());
         }
     
         // --- 4. ACTUALIZAR CONTRASEÑA ---
-        if (usuarioDTO.getPassword() != null && !usuarioDTO.getPassword().isEmpty()) {
-            usuarioExistente.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
+        if (usuario.getPassword() != null && !usuario.getPassword().isEmpty()) {
+            usuarioExistente.setPassword(passwordEncoder.encode(usuario.getPassword()));
         }
     
         // 6. Guardar cambios
         Usuarios usuarioActualizado = usuariosRepository.save(usuarioExistente);
     
-        // 7. Retornar DTO sin la contraseña
         UsuariosResponse resultado = usuariosMapper.toDTO(usuarioActualizado);
-        resultado.setPassword(null);
     
         return resultado;
     }
@@ -185,8 +180,6 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
             .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con email: " + email));
 
         UsuariosResponse dto = usuariosMapper.toDTO(usuario);
-        dto.setPassword(null);
-        // Asegúrate de que el DTO incluya ID y Rol (como Long/String) para que el frontend pueda usarlos.
         return dto;
     }
 }

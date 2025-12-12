@@ -79,7 +79,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="correo@unipacifico.edu"
+                  placeholder="correo@unipacifico.edu.co"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
