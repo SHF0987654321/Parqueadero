@@ -1,6 +1,7 @@
 package co.edu.unipacifico.demo.controllers;
 
-import co.edu.unipacifico.demo.dtos.MovimientosDTO;
+import co.edu.unipacifico.demo.dtos.MovimientosRequest;
+import co.edu.unipacifico.demo.dtos.MovimientosResponse;
 import co.edu.unipacifico.demo.services.MovimientosService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +20,21 @@ public class MovimientosController {
 
     // Registrar entrada de un vehículo
     @PostMapping("/entrada")
-    public ResponseEntity<MovimientosDTO> registrarEntrada(@Valid @RequestBody MovimientosDTO movimientoDTO) {
-        MovimientosDTO nuevoMovimiento = movimientosService.registrarEntrada(movimientoDTO);
+    public ResponseEntity<MovimientosResponse> registrarEntrada(@Valid @RequestBody MovimientosRequest movimientoDTO) {
+        MovimientosResponse nuevoMovimiento = movimientosService.registrarEntrada(movimientoDTO);
         return new ResponseEntity<>(nuevoMovimiento, HttpStatus.CREATED);
     }
 
     // Registrar salida de un vehículo
     @PutMapping("/salida/{placa}")
-    public ResponseEntity<MovimientosDTO> registrarSalida(@PathVariable String placa) {
-        MovimientosDTO movimientoActualizado = movimientosService.registrarSalida(placa);
+    public ResponseEntity<MovimientosResponse> registrarSalida(@PathVariable String placa) {
+        MovimientosResponse movimientoActualizado = movimientosService.registrarSalida(placa);
         return ResponseEntity.ok(movimientoActualizado);
     }
 
     // Consultar movimiento activo de un vehículo
     @GetMapping("/activo/vehiculo/{vehiculoId}")
-    public ResponseEntity<MovimientosDTO> consultarMovimientoActivoPorPlaca(@PathVariable String placa) {
+    public ResponseEntity<MovimientosResponse> consultarMovimientoActivoPorPlaca(@PathVariable String placa) {
         return movimientosService.consultarMovimientoActivoPorPlaca(placa)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -41,28 +42,28 @@ public class MovimientosController {
 
     // Consultar todos los movimientos activos
     @GetMapping("/activos")
-    public ResponseEntity<List<MovimientosDTO>> consultarMovimientosActivos() {
-        List<MovimientosDTO> movimientos = movimientosService.consultarMovimientosActivos();
+    public ResponseEntity<List<MovimientosResponse>> consultarMovimientosActivos() {
+        List<MovimientosResponse> movimientos = movimientosService.consultarMovimientosActivos();
         return ResponseEntity.ok(movimientos);
     }
 
     // Consultar historial de movimientos de un vehículo
     @GetMapping("/historial/vehiculo/{placa}")
-    public ResponseEntity<List<MovimientosDTO>> consultarHistorialPorPlaca(@PathVariable String placa) {
-        List<MovimientosDTO> historial = movimientosService.consultarHistorialPorPlaca(placa);
+    public ResponseEntity<List<MovimientosResponse>> consultarHistorialPorPlaca(@PathVariable String placa) {
+        List<MovimientosResponse> historial = movimientosService.consultarHistorialPorPlaca(placa);
         return ResponseEntity.ok(historial);
     }
 
     // Consultar historial de movimientos de un usuario
     @GetMapping("/historial/usuario/{usuarioId}")
-    public ResponseEntity<List<MovimientosDTO>> consultarHistorialPorUsuario(@PathVariable Long usuarioId) {
-        List<MovimientosDTO> historial = movimientosService.consultarHistorialPorUsuario(usuarioId);
+    public ResponseEntity<List<MovimientosResponse>> consultarHistorialPorUsuario(@PathVariable Long usuarioId) {
+        List<MovimientosResponse> historial = movimientosService.consultarHistorialPorUsuario(usuarioId);
         return ResponseEntity.ok(historial);
     }
 
     // Consultar un movimiento por ID
     @GetMapping("/{id}")
-    public ResponseEntity<MovimientosDTO> consultarMovimientoPorId(@PathVariable Long id) {
+    public ResponseEntity<MovimientosResponse> consultarMovimientoPorId(@PathVariable Long id) {
         return movimientosService.consultarMovimientoPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

@@ -19,7 +19,9 @@ public interface LugaresRepository extends JpaRepository<Lugares, Long> {
     Optional<Lugares> findByNombre(String nombre);
 
     // Obtener el primer lugar libre que coincida con un tipo específico
-    @Query("SELECT l FROM Lugares l WHERE l.tipo = :tipo AND l.id NOT IN (SELECT m.lugar.id FROM Movimientos m WHERE m.fechaSalida IS NULL)")
+    @Query(value = "SELECT * FROM lugares l " +
+               "WHERE l.tipo = :tipo AND l.id NOT IN (SELECT m.lugar_id FROM movimientos m WHERE m.fecha_salida IS NULL) " +
+               "LIMIT 1", nativeQuery = true)
     Optional<Lugares> findPrimerLugarDisponiblePorTipo(@Param("tipo") String tipo);
     
     // Contar lugares ocupados (que tienen movimientos sin fecha_salida)

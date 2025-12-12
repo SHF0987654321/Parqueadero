@@ -1,11 +1,13 @@
+// app/login/page.tsx
 "use client"
 
-import type React from "react"
+// 1. Asegúrate de importar useEffect
+import React, { useState, useEffect } from "react" 
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/contexts/auth-context"
+// 2. Aquí es donde se importa 'useAuth'
+import { useAuth } from "@/contexts/auth-context" 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,16 +19,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { login, user } = useAuth()
+  const { login, user, isAuthenticated } = useAuth() // Accede al 'user' tipado
   const router = useRouter()
   const { toast } = useToast()
 
-  // Redirect if already logged in
-  if (user) {
-    router.push(user.rol === "ADMIN" ? "/admin" : "/dashboard")
+  // --- CORRECCIÓN FINAL: Usar useEffect para la Redirección Inicial ---
+  // Este hook se ejecuta cuando 'user' cambia (al cargar la página o después de un login exitoso).
+  useEffect(() => {
+    // Como 'user' es de tipo User | null (definido en auth-context.tsx), 
+    // TypeScript permite acceder a 'user.rol' de forma segura.
+    if (user && isAuthenticated) {
+      // TypeScript ya sabe que user.rol existe.
+      const destination = user.rol === "ADMIN" ? "/admin" : "/dashboard"
+      router.push(destination)
+    }
+  }, [user, isAuthenticated, router]) 
+
+  // Si el usuario existe, se retorna 'null' para que React no intente renderizar
+  // el formulario mientras la redirección está en curso.
+  if (user && isAuthenticated) {
     return null
   }
-
+  
+  // --- LÓGICA DE SUBMIT ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -38,11 +53,11 @@ export default function LoginPage() {
         title: "Bienvenido",
         description: "Has iniciado sesión correctamente",
       })
-      const storedUser = localStorage.getItem("user")
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser)
-        router.push(parsedUser.rol === "ADMIN" ? "/admin" : "/dashboard")
-      }
+      
+      // La redirección aquí se hará automáticamente gracias al 'useEffect'
+      // que detectará que la variable 'user' cambió después del login.
+      // Ya no necesitamos la lógica de 'localStorage.getItem("user")' aquí.
+
     } else {
       toast({
         title: "Error",
@@ -54,8 +69,10 @@ export default function LoginPage() {
     setIsLoading(false)
   }
 
+  // --- RENDERIZADO DEL FORMULARIO ---
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      {/* ... (El resto del JSX es el mismo) */}
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-3 mb-2">

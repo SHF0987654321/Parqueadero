@@ -1,6 +1,7 @@
 package co.edu.unipacifico.demo.mappers;
 
-import co.edu.unipacifico.demo.dtos.MovimientosDTO;
+import co.edu.unipacifico.demo.dtos.MovimientosRequest;
+import co.edu.unipacifico.demo.dtos.MovimientosResponse;
 import co.edu.unipacifico.demo.models.Movimientos;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,9 +10,15 @@ import org.mapstruct.Mapping;
 public interface MovimientosMapper {
 
     @Mapping(source = "usuario.id", target = "usuarioId")
-    MovimientosDTO toDTO(Movimientos movimiento);
+    // Target es el nombre en MovimientosResponse (ahora 'placa', 'nombreLugar', 'tipo')
+    @Mapping(source = "vehiculo.placa", target = "placa") // <-- Cambiado
+    @Mapping(source = "lugar.nombre", target = "nombreLugar") // <-- Cambiado
+    @Mapping(source = "vehiculo.tipo", target = "tipo") // <-- Cambiado
+    MovimientosResponse toDTO(Movimientos movimiento);
 
-    // DTO -> Entity: Los objetos relacionados se asignan manualmente en el servicio
     @Mapping(target = "usuario", ignore = true)
-    Movimientos toEntity(MovimientosDTO movimientoDTO);
+    @Mapping(target = "vehiculo", ignore = true) 
+    @Mapping(target = "lugar", ignore = true)   
+    // El mapeo toEntity funciona automáticamente si los nombres de origen (Request) coinciden
+    Movimientos toEntity(MovimientosRequest movimiento);
 }

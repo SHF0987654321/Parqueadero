@@ -123,7 +123,6 @@ export const lugaresApi = {
 export interface Movimiento {
   id: number
   placa: string
-  lugarId: number
   lugar?: Lugar
   usuarioId: number
   fechaEntrada: string

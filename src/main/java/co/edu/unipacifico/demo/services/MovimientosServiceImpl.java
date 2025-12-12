@@ -1,6 +1,7 @@
 package co.edu.unipacifico.demo.services;
 
-import co.edu.unipacifico.demo.dtos.MovimientosDTO;
+import co.edu.unipacifico.demo.dtos.MovimientosRequest;
+import co.edu.unipacifico.demo.dtos.MovimientosResponse;
 import co.edu.unipacifico.demo.exceptions.DatabaseException;
 import co.edu.unipacifico.demo.mappers.MovimientosMapper;
 import co.edu.unipacifico.demo.models.*;
@@ -27,93 +28,99 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional
-    public MovimientosDTO registrarEntrada(MovimientosDTO movimientoDTO) {
+    public MovimientosResponse registrarEntrada(MovimientosRequest movimiento) {
         try {
-            // --- 1. VALIDAR Y/O REGISTRAR VEHÍCULO ---
+        // --- 1. VALIDAR Y/O REGISTRAR VEHÍCULO ---
             Vehiculos vehiculo;
-            Optional<Vehiculos> vehiculoExistente = vehiculosRepository.findByPlaca(movimientoDTO.getVehiculoPlaca());
-        
+            Optional<Vehiculos> vehiculoExistente = vehiculosRepository.findByPlaca(movimiento.getPlaca());
+    
             if (vehiculoExistente.isPresent()) {
                 vehiculo = vehiculoExistente.get();
             } else {
                 // Regla 2: Si el vehículo no existe, se registra automáticamente.
-                // NOTA: Asumiendo que el DTO incluye 'tipo' de vehículo y/o otros datos necesarios.
-                vehiculo = registrarNuevoVehiculo(movimientoDTO); 
-                // Esto es un método auxiliar que debes implementar.
+                // Para registrar un vehículo nuevo, el tipo (vehiculoTipo en el request) es obligatorio.
+                if (movimiento.getTipo() == null || movimiento.getTipo().trim().isEmpty()) {
+                    throw new RuntimeException("El tipo de vehículo es obligatorio para registrar un vehículo nuevo.");
+                }
+                vehiculo = registrarNuevoVehiculo(movimiento); 
             }
-        
+    
             // Validar que el vehículo no tenga un movimiento activo (ya esté dentro)
             Optional<Movimientos> movimientoActivo = movimientosRepository
                     .findMovimientoActivoByVehiculoId(vehiculo.getId());
-        
+    
             if (movimientoActivo.isPresent()) {
                 throw new RuntimeException("El vehículo ya tiene un movimiento activo en el sistema.");
             }
-        
+    
             // --- 2. ASIGNAR Y VALIDAR LUGAR (Lógica Condicional) ---
             Lugares lugar;
-            String tipoVehiculo = vehiculo.getTipo(); // Asume que la entidad Vehiculos tiene un campo 'tipo'
-            String nombreLugarSolicitado = movimientoDTO.getLugarNombre();
+            // Obtenemos el tipo de vehículo de la entidad, no del Request (es más confiable)
+            String tipoVehiculo = vehiculo.getTipo(); 
+            String nombreLugarSolicitado = movimiento.getNombreLugar();
 
-            // Si el nombre del lugar fue proporcionado en el DTO
+            // Si el nombre del lugar fue proporcionado
             if (nombreLugarSolicitado != null && !nombreLugarSolicitado.trim().isEmpty()) {
-            
+        
                 // A. Búsqueda y Validación de Lugar ESPECÍFICO
                 lugar = lugaresRepository.findByNombre(nombreLugarSolicitado)
                         .orElseThrow(() -> new RuntimeException("Lugar no encontrado con nombre: " + nombreLugarSolicitado));
-            
+        
                 // Regla 1: Validar que el tipo de vehículo coincida con el tipo de lugar
                 if (!lugar.getTipo().equalsIgnoreCase(tipoVehiculo)) {
                      throw new RuntimeException("El lugar '" + nombreLugarSolicitado + "' es para tipo '" + lugar.getTipo() + "' y el vehículo es tipo '" + tipoVehiculo + "'.");
                 }
-            
+        
                 // Validar que el lugar ESPECÍFICO esté libre
                 List<Movimientos> movimientosLugar = movimientosRepository
                         .findMovimientosActivosByLugarId(lugar.getId());
-            
+        
                 if (!movimientosLugar.isEmpty()) {
                     throw new RuntimeException("El lugar '" + nombreLugarSolicitado + "' ya está ocupado.");
                 }
-        
+    
             } else {
-            
+        
                 // B. Búsqueda y Asignación de Lugar AUTOMÁTICO
-                // Búsqueda eficiente del primer lugar libre y que coincida con el TIPO de vehículo
-                lugar = lugaresRepository.findPrimerLugarDisponiblePorTipo(tipoVehiculo) // <-- Nuevo método necesario
+            
+                // La validación del tipo de vehículo ya se hizo arriba si el vehículo era nuevo.
+                // Aquí, buscamos el lugar disponible usando el tipo.
+                lugar = lugaresRepository.findPrimerLugarDisponiblePorTipo(tipoVehiculo)
                         .orElseThrow(() -> new RuntimeException("No hay lugares disponibles de tipo '" + tipoVehiculo + "' en el parqueadero."));
             }
-        
+    
             // --- 3. VALIDAR USUARIO ---
-            Usuarios usuario = usuariosRepository.findById(movimientoDTO.getUsuarioId())
+            Usuarios usuario = usuariosRepository.findById(movimiento.getUsuarioId())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
-        
-            // --- 4. CREAR Y GUARDAR MOVIMIENTO ---
-            Movimientos movimiento = new Movimientos();
-            movimiento.setVehiculo(vehiculo);
-            movimiento.setUsuario(usuario);
-            movimiento.setLugar(lugar);
-            movimiento.setFechaEntrada(movimientoDTO.getFechaEntrada() != null 
-                    ? movimientoDTO.getFechaEntrada() 
-                    : LocalDateTime.now());
-        
-            Movimientos movimientoGuardado = movimientosRepository.save(movimiento);
-        
+    
+            // --- 4. CREAR Y GUARDAR MOVIMIENTO (FECHA ASIGNADA EN SERVIDOR) ---
+            Movimientos movimientoNuevo = new Movimientos();
+            movimientoNuevo.setVehiculo(vehiculo);
+            movimientoNuevo.setUsuario(usuario);
+            movimientoNuevo.setLugar(lugar);
+            // ASIGNACIÓN DE FECHA EN EL SERVIDOR (CORRECCIÓN CLAVE)
+            movimientoNuevo.setFechaEntrada(LocalDateTime.now());
+    
+            Movimientos movimientoGuardado = movimientosRepository.save(movimientoNuevo);
+    
             return movimientosMapper.toDTO(movimientoGuardado);
-        
+    
         } catch (RuntimeException e) {
+            // Las excepciones de negocio se relanzan para que el ControllerAdvice las maneje como 400
             throw e;
         } catch (Exception e) {
+            // Excepciones no esperadas se envuelven en una excepción de la base de datos
             throw new DatabaseException("Error fatal al registrar la entrada del vehículo.", e);
         }
     }
 
-    private Vehiculos registrarNuevoVehiculo(MovimientosDTO movimientoDTO) {
+    private Vehiculos registrarNuevoVehiculo(MovimientosRequest movimiento) {
         // 1. Crear una nueva entidad Vehiculos
         Vehiculos nuevoVehiculo = new Vehiculos();
     
         // 2. Asignar los campos necesarios
-        nuevoVehiculo.setPlaca(movimientoDTO.getVehiculoPlaca());
-        nuevoVehiculo.setTipo(movimientoDTO.getVehiculoTipo()); 
+        nuevoVehiculo.setPlaca(movimiento.getPlaca());
+        nuevoVehiculo.setTipo(movimiento.getTipo()); 
     
         // 3. Guardar en el repositorio de Vehiculos
         return vehiculosRepository.save(nuevoVehiculo);
@@ -121,7 +128,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional
-    public MovimientosDTO registrarSalida(String placa) {
+    public MovimientosResponse registrarSalida(String placa) {
         try {
             // --- 1. BUSCAR VEHÍCULO POR PLACA ---
             Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
@@ -151,7 +158,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<MovimientosDTO> consultarMovimientoActivoPorPlaca(String placa) {
+    public Optional<MovimientosResponse> consultarMovimientoActivoPorPlaca(String placa) {
         try {
             Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
                     .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con placa: " + placa));
@@ -166,7 +173,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MovimientosDTO> consultarMovimientosActivos() {
+    public List<MovimientosResponse> consultarMovimientosActivos() {
         try {
             return movimientosRepository.findMovimientosActivos().stream()
                     .map(movimientosMapper::toDTO)
@@ -178,7 +185,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MovimientosDTO> consultarHistorialPorPlaca(String placa) {
+    public List<MovimientosResponse> consultarHistorialPorPlaca(String placa) {
         try {
             Vehiculos vehiculo = vehiculosRepository.findByPlaca(placa)
                     .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con placa: " + placa));
@@ -194,7 +201,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MovimientosDTO> consultarHistorialPorUsuario(Long usuarioId) {
+    public List<MovimientosResponse> consultarHistorialPorUsuario(Long usuarioId) {
         try {
             return movimientosRepository.findByUsuarioIdOrderByFechaEntradaDesc(usuarioId).stream()
                     .map(movimientosMapper::toDTO)
@@ -206,7 +213,7 @@ public class MovimientosServiceImpl implements MovimientosService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<MovimientosDTO> consultarMovimientoPorId(Long id) {
+    public Optional<MovimientosResponse> consultarMovimientoPorId(Long id) {
         try {
             return movimientosRepository.findById(id)
                     .map(movimientosMapper::toDTO);
