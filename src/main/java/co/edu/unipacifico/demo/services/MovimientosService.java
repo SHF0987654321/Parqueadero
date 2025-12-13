@@ -28,4 +28,6 @@ public interface MovimientosService {
     
     // Consultar movimiento por ID
     Optional<MovimientosResponse> consultarMovimientoPorId(Long id);
+
+    List<MovimientosResponse> consultarTodosLosMovimientos();
 }

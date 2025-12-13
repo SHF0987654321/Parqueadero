@@ -29,4 +29,7 @@ public interface MovimientosRepository extends JpaRepository<Movimientos, Long> 
     
     // Buscar historial de movimientos de un usuario
     List<Movimientos> findByUsuarioIdOrderByFechaEntradaDesc(Long usuarioId);
+
+    // Buscar todos los movimientos (activos e inactivos)
+    List<Movimientos> findAllByOrderByFechaEntradaDesc();
 }

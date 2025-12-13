@@ -123,8 +123,9 @@ export const lugaresApi = {
 export interface Movimiento {
   id: number
   placa: string
-  lugar?: Lugar
   usuarioId: number
+  tipo: string
+  nombreLugar: string
   fechaEntrada: string
   fechaSalida?: string
 }
@@ -147,4 +148,8 @@ export const movimientosApi = {
     fetchWithAuth<Movimiento>(`/movimientos/salida/${placa}`, {
       method: "PUT",
     }),
+
+  getHistorial: () => fetchWithAuth<Movimiento[]>("/movimientos/historial", {
+    method: "GET",
+  }),
 }

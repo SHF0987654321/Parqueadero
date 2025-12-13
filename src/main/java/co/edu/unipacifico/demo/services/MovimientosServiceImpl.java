@@ -221,4 +221,16 @@ public class MovimientosServiceImpl implements MovimientosService {
             throw new DatabaseException("Error al consultar el movimiento por ID.", e);
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<MovimientosResponse> consultarTodosLosMovimientos() {
+        try {
+            return movimientosRepository.findAllByOrderByFechaEntradaDesc().stream()
+                    .map(movimientosMapper::toDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new DatabaseException("Error al consultar todos los movimientos.", e);
+        }
+    }
 }

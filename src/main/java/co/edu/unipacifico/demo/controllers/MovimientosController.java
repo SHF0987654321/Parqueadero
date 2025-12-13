@@ -68,4 +68,10 @@ public class MovimientosController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+    // Consultar todos los movimientos (activos e inactivos)
+    @GetMapping("/historial")
+    public ResponseEntity<List<MovimientosResponse>> consultarTodosLosMovimientos() {
+        List<MovimientosResponse> movimientos = movimientosService.consultarTodosLosMovimientos();
+        return ResponseEntity.ok(movimientos);
+    }
 }
