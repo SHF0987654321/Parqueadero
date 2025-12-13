@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { StatsCards, TypeStatsCards } from "@/components/dashboard/stats-cards"
-import { VehicleFilter } from "@/components/dashboard/vehicle-filter"
 import { VehicleEntryForm } from "@/components/admin/vehicle-entry-form"
 import { VehicleExitForm } from "@/components/admin/vehicle-exit-form"
 import { CreatePlaceForm } from "@/components/admin/create-place-form"
@@ -137,14 +136,7 @@ export default function AdminPage() {
 
           <TabsContent value="overview" className="space-y-8">
             <StatsCards stats={stats} isLoading={isLoading} />
-
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h3 className="text-xl font-semibold text-foreground">Filtrar por tipo</h3>
-                <VehicleFilter selected={filter} onSelect={setFilter} />
-              </div>
-              <TypeStatsCards stats={stats} isLoading={isLoading} />
-            </div>
+            <TypeStatsCards stats={stats} isLoading={isLoading} />
           </TabsContent>
 
           {/* === TABS CONTENT MOVEMENTS (AQUÍ ESTÁ EL CAMBIO) === */}

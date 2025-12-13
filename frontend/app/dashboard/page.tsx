@@ -89,13 +89,12 @@ export default function DashboardPage() {
 
         <div className="space-y-8">
           <StatsCards stats={stats} isLoading={isLoading} />
-
-          <div className="space-y-4">
+          <div className="space-y-8">
+            <TypeStatsCards stats={stats} isLoading={isLoading} />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h3 className="text-xl font-semibold text-foreground">Filtrar por tipo</h3>
               <VehicleFilter selected={filter} onSelect={setFilter} />
             </div>
-            <TypeStatsCards stats={stats} isLoading={isLoading} />
           </div>
 
           <Tabs defaultValue="libres" className="space-y-4">
