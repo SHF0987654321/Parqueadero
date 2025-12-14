@@ -79,8 +79,32 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
 }
 
 export function TypeStatsCards({ stats, isLoading }: StatsCardsProps) {
-  if (isLoading || !stats?.porTipo) {
-    return null
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="h-4 w-24 bg-muted rounded" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between">
+                <div className="h-8 w-10 bg-muted rounded" />
+                <div className="h-8 w-10 bg-muted rounded" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (!stats?.porTipo) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        No hay estadísticas por tipo disponibles.
+      </div>
+    )
   }
 
   const typeCards = [

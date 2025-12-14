@@ -4,7 +4,6 @@ import co.edu.unipacifico.demo.dtos.MovimientosRequest;
 import co.edu.unipacifico.demo.dtos.MovimientosResponse;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MovimientosService {
     
@@ -15,7 +14,7 @@ public interface MovimientosService {
     MovimientosResponse registrarSalida(String placa);
     
     // Consultar movimiento activo de un vehículo
-    Optional<MovimientosResponse> consultarMovimientoActivoPorPlaca(String placa);
+    MovimientosResponse consultarMovimientoActivoPorPlaca(String placa);
     
     // Consultar todos los movimientos activos
     List<MovimientosResponse> consultarMovimientosActivos();
@@ -27,7 +26,7 @@ public interface MovimientosService {
     List<MovimientosResponse> consultarHistorialPorUsuario(Long usuarioId);
     
     // Consultar movimiento por ID
-    Optional<MovimientosResponse> consultarMovimientoPorId(Long id);
+    MovimientosResponse consultarMovimientoPorId(Long id);
 
     List<MovimientosResponse> consultarTodosLosMovimientos();
 }

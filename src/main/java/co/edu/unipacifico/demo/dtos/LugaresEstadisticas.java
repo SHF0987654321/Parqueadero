@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class LugaresEstadisticasDTO {
+public class LugaresEstadisticas {
     
     private Long total;
     private Long ocupados;

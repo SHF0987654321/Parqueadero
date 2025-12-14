@@ -25,7 +25,11 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Pr
 
     if (!response.ok) {
       return {
-        error: data.message || data.error || getErrorMessage(response.status),
+        error:
+          data.mensaje ||
+          data.message ||
+          data.error ||
+          getErrorMessage(response.status),
       }
     }
 

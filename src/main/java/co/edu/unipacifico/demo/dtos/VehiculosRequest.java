@@ -7,9 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class VehiculosDTO {
-    private Long id;
+public class VehiculosRequest {
     private String placa;
     private String tipo;
-
 }

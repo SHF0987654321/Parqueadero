@@ -1,8 +1,11 @@
 package co.edu.unipacifico.demo.services;
 
-import co.edu.unipacifico.demo.dtos.LugaresDTO;
-import co.edu.unipacifico.demo.dtos.LugaresEstadisticasDTO;
+import co.edu.unipacifico.demo.dtos.LugaresRequest;
+import co.edu.unipacifico.demo.dtos.LugaresResponse;
+import co.edu.unipacifico.demo.dtos.LugaresEstadisticas;
 import co.edu.unipacifico.demo.exceptions.DatabaseException;
+import co.edu.unipacifico.demo.exceptions.InvalidOperationExeception;
+import co.edu.unipacifico.demo.exceptions.ResourceNotFoundException;
 import co.edu.unipacifico.demo.mappers.LugaresMapper;
 import co.edu.unipacifico.demo.models.Lugares;
 import co.edu.unipacifico.demo.repositories.LugaresRepository;
@@ -13,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -24,61 +27,68 @@ public class LugaresServiceImpl implements LugaresService {
     private final LugaresRepository lugaresRepository;
     private final LugaresMapper lugaresMapper;
 
-    // --- Lógica de Estado para DTOs (Método Auxiliar) ---
-    // Este método toma una lista de Lugares y les asigna el estado antes de mapearlos a DTO
-    private List<LugaresDTO> mapAndSetState(List<Lugares> lugares) {
-        // 1. Obtener los IDs de todos los lugares actualmente ocupados
-        // Se llama a findLugaresOcupados una sola vez para eficiencia
-        List<Long> lugaresOcupadosIds = lugaresRepository.findLugaresOcupados().stream()
-                .map(Lugares::getId)
-                .collect(Collectors.toList());
-
-        // 2. Mapear y asignar el estado basado en la lista de IDs ocupados
-        return lugares.stream()
-                .map(lugar -> {
-                    LugaresDTO dto = lugaresMapper.toDTO(lugar);
-                    if (lugaresOcupadosIds.contains(lugar.getId())) {
-                        dto.setEstado("OCUPADO");
-                    } else {
-                        dto.setEstado("LIBRE");
-                    }
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-    // ----------------------------------------------------
-
     @Override
-    public LugaresDTO crearLugar(LugaresDTO lugarDTO) {
-        // ... (Tu código existente)
+    @Transactional
+    public LugaresResponse crearLugar(LugaresRequest lugar) {
         try {
-            Lugares lugar = lugaresMapper.toEntity(lugarDTO);
-            Lugares lugarGuardado = lugaresRepository.save(lugar);
-            return lugaresMapper.toDTO(lugarGuardado);
+            // 1. Validar que no exista un lugar con el mismo nombre
+            if (lugaresRepository.existsByNombre(lugar.getNombre())) {
+                throw new InvalidOperationExeception(
+                    "Ya existe un lugar con el nombre: " + lugar.getNombre()
+                );
+            }
+
+            // 2. Mapear DTO → entidad
+            Lugares nuevoLugar = lugaresMapper.toEntity(lugar);
+
+            // 3. Guardar
+            Lugares lugarCreado = lugaresRepository.save(nuevoLugar);
+
+            // 4. Retornar DTO
+            return lugaresMapper.toDTO(lugarCreado);
+
+        } catch (RuntimeException e) {
+            throw e; // reglas de negocio
         } catch (Exception e) {
-            throw new DatabaseException("Error al crear el lugar en la base de datos.", e);
+            throw new DatabaseException(
+                "Error al crear el lugar en la base de datos.", e
+            );
         }
     }
+    
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<LugaresDTO> consultarLugarPorId(Long id) {
-        // ... (Tu código existente)
+    public LugaresResponse consultarLugarPorId(Long id) {
         try {
-            return lugaresRepository.findById(id)
-                    .map(lugaresMapper::toDTO);
+            Lugares lugar = lugaresRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Lugar no encontrado con ID: " + id));
+
+            return lugaresMapper.toDTO(lugar);
+
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            throw new DatabaseException("Error al consultar el lugar por ID.", e);
+            throw new DatabaseException(
+                "Error al consultar el lugar por ID.", e);
         }
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public List<LugaresDTO> consultarTodosLosLugares() {
+    public List<LugaresResponse> consultarTodosLosLugares() {
         try {
-            List<Lugares> todosLosLugares = lugaresRepository.findAll();
-            // Llama al método auxiliar para asignar estado
-            return mapAndSetState(todosLosLugares);
+                return lugaresRepository.findAllWithEstado()
+                        .stream()
+                        .map(p -> new LugaresResponse(
+                                p.getId(),
+                                p.getNombre(),
+                                p.getTipo(),
+                                p.getEstado()
+                        ))
+                        .collect(Collectors.toList());
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar todos los lugares.", e);
         }
@@ -88,7 +98,7 @@ public class LugaresServiceImpl implements LugaresService {
 
     @Override
     @Transactional(readOnly = true)
-    public LugaresDTO actualizarLugar(Long id, LugaresDTO lugarDTO) {
+    public LugaresResponse actualizarLugar(Long id, LugaresRequest lugarDTO) {
         try {
             Lugares lugarExistente = lugaresRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Lugar no encontrado con id: " + id));
@@ -121,11 +131,17 @@ public class LugaresServiceImpl implements LugaresService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LugaresDTO> consultarLugaresPorTipo(String tipo) {
+    public List<LugaresResponse> consultarLugaresPorTipo(String tipo) {
         try {
-            List<Lugares> lugares = lugaresRepository.findByTipo(tipo);
-            // Llama al método auxiliar para asignar estado
-            return mapAndSetState(lugares);
+                return lugaresRepository.findAllWithEstadoByTipo(tipo)
+                        .stream()
+                        .map(p -> new LugaresResponse(
+                                p.getId(),
+                                p.getNombre(),
+                                p.getTipo(),
+                                p.getEstado()
+                        ))
+                        .collect(Collectors.toList());
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar lugares por tipo.", e);
         }
@@ -133,18 +149,18 @@ public class LugaresServiceImpl implements LugaresService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LugaresDTO> consultarLugaresOcupados(String tipo) {
+    public List<LugaresResponse> consultarLugaresOcupados(String tipo) {
         try {
-            List<Lugares> lugares;
-            if (tipo != null && !tipo.isEmpty()) {
-                lugares = lugaresRepository.findLugaresOcupadosPorTipo(tipo);
-            } else {
-                lugares = lugaresRepository.findLugaresOcupados();
-            }
-            // Los lugares ocupados ya vienen filtrados por el repositorio, pero mapAndSetState 
-            // asegura que el campo 'estado' se establezca en 'OCUPADO' (aunque debería ser redundante, 
-            // es buena práctica garantizar la consistencia del DTO).
-            return mapAndSetState(lugares); 
+            return lugaresRepository.findAllWithEstadoByTipo(tipo)
+                       .stream()
+                      .filter(p -> "OCUPADO".equals(p.getEstado()))
+                     .map(p -> new LugaresResponse(
+                            p.getId(),
+                            p.getNombre(),
+                               p.getTipo(),
+                               p.getEstado()
+                     ))
+                      .collect(Collectors.toList()); 
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar lugares ocupados.", e);
         }
@@ -152,17 +168,18 @@ public class LugaresServiceImpl implements LugaresService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LugaresDTO> consultarLugaresLibres(String tipo) {
+    public List<LugaresResponse> consultarLugaresLibres(String tipo) {
         try {
-            List<Lugares> lugares;
-            if (tipo != null && !tipo.isEmpty()) {
-                lugares = lugaresRepository.findLugaresLibresPorTipo(tipo);
-            } else {
-                lugares = lugaresRepository.findLugaresLibres();
-            }
-            // Los lugares libres ya vienen filtrados por el repositorio, mapAndSetState 
-            // asegura que el campo 'estado' se establezca en 'LIBRE'.
-            return mapAndSetState(lugares);
+            return lugaresRepository.findAllWithEstadoByTipo(tipo)
+                       .stream()
+                      .filter(p -> "LIBRE".equals(p.getEstado()))
+                     .map(p -> new LugaresResponse(
+                            p.getId(),
+                            p.getNombre(),
+                               p.getTipo(),
+                               p.getEstado()
+                     ))
+                      .collect(Collectors.toList());
         } catch (Exception e) {
             throw new DatabaseException("Error al consultar lugares libres.", e);
         }
@@ -170,7 +187,7 @@ public class LugaresServiceImpl implements LugaresService {
 
     @Override
     @Transactional(readOnly = true)
-    public LugaresEstadisticasDTO obtenerEstadisticas(String tipo) { 
+    public LugaresEstadisticas obtenerEstadisticas(String tipo) { 
         try {
             Long totalLugares = lugaresRepository.count();
             Long lugaresOcupados = lugaresRepository.contarLugaresOcupados();
@@ -179,7 +196,7 @@ public class LugaresServiceImpl implements LugaresService {
             final List<String> TIPOS_VALIDOS = List.of("CARRO", "MOTO", "BUS");
             
             // 1. Declarar e inicializar el mapa
-            Map<String, LugaresEstadisticasDTO.EstadisticasPorTipo> porTipoMap = new HashMap<>();
+            Map<String, LugaresEstadisticas.EstadisticasPorTipo> porTipoMap = new HashMap<>();
 
             // 2. Bucle para calcular las estadísticas por tipo
             for (String tipoActual : TIPOS_VALIDOS) {
@@ -187,14 +204,14 @@ public class LugaresServiceImpl implements LugaresService {
                 Long ocupadosTipo = lugaresRepository.contarLugaresOcupadosPorTipo(tipoActual);
                 Long libresTipo = totalTipo - ocupadosTipo;
             
-                LugaresEstadisticasDTO.EstadisticasPorTipo statsTipo = 
-                    new LugaresEstadisticasDTO.EstadisticasPorTipo(libresTipo, ocupadosTipo);
+                LugaresEstadisticas.EstadisticasPorTipo statsTipo = 
+                    new LugaresEstadisticas.EstadisticasPorTipo(libresTipo, ocupadosTipo);
                 
                 porTipoMap.put(tipoActual, statsTipo);
             }
         
             // 3. Crear y devolver el DTO final
-            LugaresEstadisticasDTO resultado = new LugaresEstadisticasDTO(
+            LugaresEstadisticas resultado = new LugaresEstadisticas(
                 totalLugares, 
                 lugaresOcupados, 
                 lugaresLibres, 

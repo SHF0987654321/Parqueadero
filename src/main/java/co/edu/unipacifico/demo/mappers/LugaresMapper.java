@@ -1,13 +1,14 @@
 package co.edu.unipacifico.demo.mappers;
 
-import co.edu.unipacifico.demo.dtos.LugaresDTO;
+import co.edu.unipacifico.demo.dtos.LugaresRequest;
+import co.edu.unipacifico.demo.dtos.LugaresResponse;
 import co.edu.unipacifico.demo.models.Lugares;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface LugaresMapper {
 
-    LugaresDTO toDTO(Lugares lugar);
+    LugaresResponse toDTO(Lugares lugar);
 
-    Lugares toEntity(LugaresDTO lugarDTO);
+    Lugares toEntity(LugaresRequest lugar);
 }

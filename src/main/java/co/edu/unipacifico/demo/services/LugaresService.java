@@ -1,27 +1,27 @@
 package co.edu.unipacifico.demo.services;
 
-import co.edu.unipacifico.demo.dtos.LugaresDTO;
-import co.edu.unipacifico.demo.dtos.LugaresEstadisticasDTO;
+import co.edu.unipacifico.demo.dtos.LugaresRequest;
+import co.edu.unipacifico.demo.dtos.LugaresResponse;
+import co.edu.unipacifico.demo.dtos.LugaresEstadisticas;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface LugaresService {
     
     // CRUD básico
-    LugaresDTO crearLugar(LugaresDTO lugarDTO);
-    Optional<LugaresDTO> consultarLugarPorId(Long id);
-    List<LugaresDTO> consultarTodosLosLugares();
-    LugaresDTO actualizarLugar(Long id, LugaresDTO lugarDTO);
+    LugaresResponse crearLugar(LugaresRequest lugar);
+    LugaresResponse consultarLugarPorId(Long id);
+    List<LugaresResponse> consultarTodosLosLugares();
+    LugaresResponse actualizarLugar(Long id, LugaresRequest lugar);
     void eliminarLugar(Long id);
     
     // Consultas por tipo
-    List<LugaresDTO> consultarLugaresPorTipo(String tipo);
+    List<LugaresResponse> consultarLugaresPorTipo(String tipo);
     
     // Consultas de disponibilidad
-    List<LugaresDTO> consultarLugaresOcupados(String tipo);
-    List<LugaresDTO> consultarLugaresLibres(String tipo);
+    List<LugaresResponse> consultarLugaresOcupados(String tipo);
+    List<LugaresResponse> consultarLugaresLibres(String tipo);
     
     // Estadísticas
-    LugaresEstadisticasDTO obtenerEstadisticas(String tipo);
+    LugaresEstadisticas obtenerEstadisticas(String tipo);
 }

@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class RegisterRequest {
-    private Long id; 
     @NotEmpty(message = "El nombre no puede estar vacío.") 
     @Size(min = 4, max = 100, message = "El nombre debe tener entre 4 y 100 caracteres.")
     private String nombre;    

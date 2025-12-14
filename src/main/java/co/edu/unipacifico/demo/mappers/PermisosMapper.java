@@ -10,5 +10,5 @@ public interface PermisosMapper {
 
     PermisosDTO toDTO(Permisos permisos);
 
-    Permisos toEntity(PermisosDTO permisosDTO);
+    Permisos toEntity(PermisosDTO permisos);
 }

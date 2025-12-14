@@ -1,7 +1,8 @@
 package co.edu.unipacifico.demo.controllers;
 
-import co.edu.unipacifico.demo.dtos.LugaresDTO;
-import co.edu.unipacifico.demo.dtos.LugaresEstadisticasDTO;
+import co.edu.unipacifico.demo.dtos.LugaresRequest;
+import co.edu.unipacifico.demo.dtos.LugaresResponse;
+import co.edu.unipacifico.demo.dtos.LugaresEstadisticas;
 import co.edu.unipacifico.demo.services.LugaresService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,32 +21,31 @@ public class LugaresController {
 
     // Crear un nuevo lugar
     @PostMapping
-    public ResponseEntity<LugaresDTO> crearLugar(@Valid @RequestBody LugaresDTO lugarDTO) {
-        LugaresDTO nuevoLugar = lugaresService.crearLugar(lugarDTO);
+    public ResponseEntity<LugaresResponse> crearLugar(@Valid @RequestBody LugaresRequest lugarDTO) {
+        LugaresResponse nuevoLugar = lugaresService.crearLugar(lugarDTO);
         return new ResponseEntity<>(nuevoLugar, HttpStatus.CREATED);
     }
 
     // Obtener todos los lugares
     @GetMapping
-    public ResponseEntity<List<LugaresDTO>> consultarTodosLosLugares() {
-        List<LugaresDTO> lugares = lugaresService.consultarTodosLosLugares();
+    public ResponseEntity<List<LugaresResponse>> consultarTodosLosLugares() {
+        List<LugaresResponse> lugares = lugaresService.consultarTodosLosLugares();
         return ResponseEntity.ok(lugares);
     }
 
     // Obtener un lugar por ID
     @GetMapping("/{id}")
-    public ResponseEntity<LugaresDTO> consultarLugarPorId(@PathVariable Long id) {
-        return lugaresService.consultarLugarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<LugaresResponse> consultarLugarPorId(@PathVariable Long id) {
+        LugaresResponse lugar = lugaresService.consultarLugarPorId(id);
+        return ResponseEntity.ok(lugar);
     }
 
     // Actualizar un lugar
     @PutMapping("/{id}")
-    public ResponseEntity<LugaresDTO> actualizarLugar(
+    public ResponseEntity<LugaresResponse> actualizarLugar(
             @PathVariable Long id,
-            @Valid @RequestBody LugaresDTO lugarDTO) {
-        LugaresDTO lugarActualizado = lugaresService.actualizarLugar(id, lugarDTO);
+            @Valid @RequestBody LugaresRequest lugarDTO) {
+        LugaresResponse lugarActualizado = lugaresService.actualizarLugar(id, lugarDTO);
         return ResponseEntity.ok(lugarActualizado);
     }
 
@@ -58,32 +58,32 @@ public class LugaresController {
 
     // Consultar lugares por tipo
     @GetMapping("/tipo/{tipo}")
-    public ResponseEntity<List<LugaresDTO>> consultarLugaresPorTipo(@PathVariable String tipo) {
-        List<LugaresDTO> lugares = lugaresService.consultarLugaresPorTipo(tipo);
+    public ResponseEntity<List<LugaresResponse>> consultarLugaresPorTipo(@PathVariable String tipo) {
+        List<LugaresResponse> lugares = lugaresService.consultarLugaresPorTipo(tipo);
         return ResponseEntity.ok(lugares);
     }
 
     // Consultar lugares ocupados
     @GetMapping("/ocupados")
-    public ResponseEntity<List<LugaresDTO>> consultarLugaresOcupados(
+    public ResponseEntity<List<LugaresResponse>> consultarLugaresOcupados(
             @RequestParam(required = false) String tipo) {
-        List<LugaresDTO> lugares = lugaresService.consultarLugaresOcupados(tipo);
+        List<LugaresResponse> lugares = lugaresService.consultarLugaresOcupados(tipo);
         return ResponseEntity.ok(lugares);
     }
 
     // Consultar lugares libres
     @GetMapping("/libres")
-    public ResponseEntity<List<LugaresDTO>> consultarLugaresLibres(
+    public ResponseEntity<List<LugaresResponse>> consultarLugaresLibres(
             @RequestParam(required = false) String tipo) {
-        List<LugaresDTO> lugares = lugaresService.consultarLugaresLibres(tipo);
+        List<LugaresResponse> lugares = lugaresService.consultarLugaresLibres(tipo);
         return ResponseEntity.ok(lugares);
     }
 
     // Obtener estadísticas de lugares
     @GetMapping("/estadisticas")
-    public ResponseEntity<LugaresEstadisticasDTO> obtenerEstadisticas(
+    public ResponseEntity<LugaresEstadisticas> obtenerEstadisticas(
             @RequestParam(required = false) String tipo) {
-        LugaresEstadisticasDTO estadisticas = lugaresService.obtenerEstadisticas(tipo);
+        LugaresEstadisticas estadisticas = lugaresService.obtenerEstadisticas(tipo);
         return ResponseEntity.ok(estadisticas);
     }
 }

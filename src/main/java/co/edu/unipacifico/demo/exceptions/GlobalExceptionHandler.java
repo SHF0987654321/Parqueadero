@@ -17,31 +17,31 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import co.edu.unipacifico.demo.dtos.ErroresDTO;
+import co.edu.unipacifico.demo.dtos.ErroresResponse;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     // Manejo de operaciones inválidas y errores de parámetros
     @ExceptionHandler({InvalidOperationExeception.class, ParameterException.class})
-    public ResponseEntity<ErroresDTO> handleBadRequest(Exception ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            ex instanceof InvalidOperationExeception ? "INVALID_OPERATION" : "PARAMETER_ERROR",
-            ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleBadRequest(Exception ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("INVALID_OPERATION")
+            .mensaje(ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     // Manejo de errores de base de datos
     @ExceptionHandler(DatabaseException.class)
-    public ResponseEntity<ErroresDTO> handleDatabaseError(DatabaseException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "DB_INTERNAL_ERROR", 
-            "Fallo en la capa de persistencia: " + ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleDatabaseError(DatabaseException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("DB_INTERNAL_ERROR")
+            .mensaje("Fallo en la capa de persistencia: " + ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     // Manejo de errores de validación (@Valid)
@@ -69,80 +69,80 @@ public class GlobalExceptionHandler {
     }
 
     // Manejo de recursos no encontrados (404)
-    @ExceptionHandler(ResouseNotFoundException.class)
-    public ResponseEntity<ErroresDTO> handleNotFound(ResouseNotFoundException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "RESOURCE_NOT_FOUND", 
-            ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDTO);
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErroresResponse> handleNotFound(ResourceNotFoundException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("RESOURCE_NOT_FOUND")
+            .mensaje(ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     // Manejo de errores de autenticación (401)
     @ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})
-    public ResponseEntity<ErroresDTO> handleUnauthorized(AuthenticationException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "UNAUTHORIZED", 
-            ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleUnauthorized(AuthenticationException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("UNAUTHORIZED")
+            .mensaje(ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     // Manejo de acceso denegado (403)
     // NOTA: Este NO se ejecutará si CustomAccessDeniedHandler está activo en Security
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErroresDTO> handleAccessDenied(AccessDeniedException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "FORBIDDEN", 
-            "No tiene permisos suficientes para acceder a este recurso", 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleAccessDenied(AccessDeniedException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("FORBIDDEN")
+            .mensaje("No tiene permisos suficientes para acceder a este recurso")
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     // Manejo de usuarios inválidos o no encontrados (401)
     @ExceptionHandler({UsernameNotFoundException.class, InvalidUserExeception.class})
-    public ResponseEntity<ErroresDTO> handleInvalidUser(Exception ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "INVALID_USER", 
-            ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleInvalidUser(Exception ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("INVALID_USER")
+            .mensaje(ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     // Manejo de RequestException (si tienes lógica específica para esta)
     @ExceptionHandler(RequestException.class)
-    public ResponseEntity<ErroresDTO> handleRequestException(RequestException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "REQUEST_ERROR", 
-            ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleRequestException(RequestException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("REQUEST_ERROR")
+            .mensaje(ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     // Manejo genérico de RuntimeException (último recurso para errores no manejados)
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErroresDTO> handleRuntimeException(RuntimeException ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "INTERNAL_ERROR", 
-            "Error interno del servidor: " + ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleRuntimeException(RuntimeException ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("INTERNAL_ERROR")
+            .mensaje("Error interno del servidor: " + ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     // Manejo genérico de cualquier excepción no manejada (safety net)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErroresDTO> handleGenericException(Exception ex) {
-        ErroresDTO errorDTO = new ErroresDTO(
-            "UNEXPECTED_ERROR", 
-            "Error inesperado: " + ex.getMessage(), 
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDTO);
+    public ResponseEntity<ErroresResponse> handleGenericException(Exception ex) {
+        ErroresResponse error = ErroresResponse.builder()
+            .codigo("UNEXPECTED_ERROR")
+            .mensaje("Error inesperado: " + ex.getMessage())
+            .hora(LocalDateTime.now())
+            .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }

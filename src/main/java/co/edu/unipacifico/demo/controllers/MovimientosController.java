@@ -33,11 +33,10 @@ public class MovimientosController {
     }
 
     // Consultar movimiento activo de un vehículo
-    @GetMapping("/activo/vehiculo/{vehiculoId}")
+    @GetMapping("/activo/vehiculo/{placa}")
     public ResponseEntity<MovimientosResponse> consultarMovimientoActivoPorPlaca(@PathVariable String placa) {
-        return movimientosService.consultarMovimientoActivoPorPlaca(placa)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    return ResponseEntity.ok(
+        movimientosService.consultarMovimientoActivoPorPlaca(placa));
     }
 
     // Consultar todos los movimientos activos
@@ -64,9 +63,8 @@ public class MovimientosController {
     // Consultar un movimiento por ID
     @GetMapping("/{id}")
     public ResponseEntity<MovimientosResponse> consultarMovimientoPorId(@PathVariable Long id) {
-        return movimientosService.consultarMovimientoPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(
+            movimientosService.consultarMovimientoPorId(id));
     }
     // Consultar todos los movimientos (activos e inactivos)
     @GetMapping("/historial")

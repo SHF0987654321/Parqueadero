@@ -3,12 +3,13 @@ package co.edu.unipacifico.demo.services;
 import java.util.List;
 import java.util.Optional;
 
-import co.edu.unipacifico.demo.dtos.VehiculosDTO;
+import co.edu.unipacifico.demo.dtos.VehiculosRequest;
+import co.edu.unipacifico.demo.dtos.VehiculosResponse;
 
 public interface VehiculosService {
-    Optional<List<VehiculosDTO>> consultarVehiculos(String tipo); 
-    VehiculosDTO crearVehiculos(VehiculosDTO vehiculoDTO);
+    List<VehiculosResponse> consultarVehiculos(String tipo); 
+    VehiculosResponse crearVehiculos(VehiculosRequest vehiculo);
     void eliminarVehiculos(Long id);
-    VehiculosDTO actualizarVehiculos(Long id, VehiculosDTO vehiculoDTO);
+    VehiculosResponse actualizarVehiculos(Long id, VehiculosRequest vehiculo);
 
 }

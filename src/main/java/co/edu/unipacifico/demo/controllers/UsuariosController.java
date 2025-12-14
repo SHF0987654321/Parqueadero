@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unipacifico.demo.dtos.UsuariosRequest;
 import co.edu.unipacifico.demo.dtos.UsuariosResponse;
-import co.edu.unipacifico.demo.exceptions.ResouseNotFoundException;
+import co.edu.unipacifico.demo.exceptions.ResourceNotFoundException;
 import co.edu.unipacifico.demo.services.security.UsuariosService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class UsuariosController {
         
         return usuario
             .map(ResponseEntity::ok)
-            .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
     }
 
     /**

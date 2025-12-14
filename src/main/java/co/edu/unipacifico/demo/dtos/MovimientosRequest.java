@@ -1,7 +1,5 @@
 package co.edu.unipacifico.demo.dtos;
 
-import java.time.LocalDateTime;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;

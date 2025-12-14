@@ -134,9 +134,11 @@ export default function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-8">
-            <StatsCards stats={stats} isLoading={isLoading} />
-            <TypeStatsCards stats={stats} isLoading={isLoading} />
+          <TabsContent value="overview">
+            <div className="space-y-8">
+              <StatsCards stats={stats} isLoading={isLoading} />
+              <TypeStatsCards stats={stats} isLoading={isLoading} />
+            </div>
           </TabsContent>
 
           {/* === TABS CONTENT MOVEMENTS (AQUÍ ESTÁ EL CAMBIO) === */}

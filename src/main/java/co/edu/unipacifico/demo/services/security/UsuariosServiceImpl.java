@@ -14,7 +14,7 @@ import co.edu.unipacifico.demo.dtos.UsuariosRequest;
 import co.edu.unipacifico.demo.dtos.UsuariosResponse;
 import co.edu.unipacifico.demo.exceptions.DatabaseException;
 import co.edu.unipacifico.demo.exceptions.InvalidUserExeception;
-import co.edu.unipacifico.demo.exceptions.ResouseNotFoundException;
+import co.edu.unipacifico.demo.exceptions.ResourceNotFoundException;
 import co.edu.unipacifico.demo.mappers.UsuariosMapper;
 import co.edu.unipacifico.demo.models.Roles;
 import co.edu.unipacifico.demo.models.Usuarios;
@@ -59,7 +59,7 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
     public UsuariosResponse getUsuarioByNombre(String nombre) {
         Usuarios usuario = usuariosRepository.findByNombre(nombre)
             // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
-            .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con nombre: " + nombre));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con nombre: " + nombre));
         
         UsuariosResponse dto = usuariosMapper.toDTO(usuario);
         return dto;
@@ -105,7 +105,7 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
         // 1. Buscar usuario existente
         Usuarios usuarioExistente = usuariosRepository.findById(id)
             // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
-            .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
     
         // --- 2. ACTUALIZAR EMAIL (CRÍTICO) ---
         if (usuario.getEmail() != null && !usuario.getEmail().isEmpty()) {
@@ -149,7 +149,7 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
     public void eliminarUsuario(Long id) {
         if (!usuariosRepository.existsById(id)) {
             // CORRECCIÓN: ResouseNotFoundException -> ResourceNotFoundException
-            throw new ResouseNotFoundException("Usuario no encontrado con id: " + id);
+            throw new ResourceNotFoundException("Usuario no encontrado con id: " + id);
         }
         usuariosRepository.deleteById(id);
     }
@@ -177,7 +177,7 @@ public class UsuariosServiceImpl implements UsuariosService, UserDetailsService 
     @Override
     public UsuariosResponse getUsuarioByEmail(String email) {
         Usuarios usuario = usuariosRepository.findByEmail(email)
-            .orElseThrow(() -> new ResouseNotFoundException("Usuario no encontrado con email: " + email));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
 
         UsuariosResponse dto = usuariosMapper.toDTO(usuario);
         return dto;
