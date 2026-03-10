@@ -13,4 +13,12 @@ public class ParqueaderoApplication {
 		SpringApplication.run(ParqueaderoApplication.class, args);
 	}
 
+	@PostConstruct
+    public void init() {
+        System.out.println("--- VERIFICANDO CONFIGURACIÓN ---");
+        System.out.println("DB URL: " + System.getenv("DB_URL"));
+        System.out.println("JWT Generator: " + System.getenv("JWT_GENERATOR"));
+        System.out.println("---------------------------------");
+    }
+
 }
